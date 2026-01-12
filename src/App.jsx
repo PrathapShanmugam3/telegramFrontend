@@ -22,12 +22,12 @@ function App() {
           user = tg.initDataUnsafe?.user;
         }
 
-        // Mock user for local dev if not in Telegram
-        if (!user) {
-          console.warn('Telegram WebApp not detected, using mock data');
+        // Mock user for local dev ONLY
+        if (!user && window.location.hostname === 'localhost') {
+          console.warn('Telegram WebApp not detected, using mock data for localhost');
           user = {
             id: 123456789,
-            first_name: 'Test User'
+            first_name: 'Test User (Localhost)'
           };
         }
 
