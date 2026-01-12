@@ -1,8 +1,17 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+:root {
+  --primary-purple: #2e004f;
+  --light-purple: #5e00a3;
+  --accent-gold: #ffd700;
+  --text-white: #ffffff;
+  --card-bg: #1a002e;
+}
+
+body {
+  background-color: var(--primary-purple);
+  color: var(--text-white);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 .container {
@@ -11,58 +20,164 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  width: 100%;
+  max-width: 480px;
+  /* Mobile width limit */
+  margin: 0 auto;
+  background: radial-gradient(circle at center, #4a148c 0%, #120024 100%);
 }
 
-.card {
-  padding: 2em;
-  background-color: #242424;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+/* Auth/Loading Screen */
+.auth-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.user-info {
-  text-align: left;
-  margin-top: 20px;
+/* Dashboard Header */
+.header {
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 0;
+  z-index: 10;
+  box-sizing: border-box;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #000;
+}
+
+/* Balance Section */
+.balance-section {
+  margin-top: 80px;
+  text-align: center;
+}
+
+.balance-amount {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.cashout-progress {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  display: inline-block;
+}
+
+/* Spin Wheel Container */
+.wheel-container {
+  margin: 40px 0;
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+.wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 8px solid var(--accent-gold);
+  background: conic-gradient(#f44336 0deg 45deg,
+      #ff9800 45deg 90deg,
+      #ffeb3b 90deg 135deg,
+      #4caf50 135deg 180deg,
+      #2196f3 180deg 225deg,
+      #3f51b5 225deg 270deg,
+      #9c27b0 270deg 315deg,
+      #e91e63 315deg 360deg);
+  position: relative;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.wheel-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.spin-arrow {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 30px solid #fff;
+  z-index: 5;
+}
+
+/* Action Buttons */
+.spin-btn {
+  background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+  border: none;
+  padding: 15px 40px;
+  border-radius: 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
   cursor: pointer;
-  transition: border-color 0.25s;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+  transition: transform 0.2s;
 }
 
-button:hover {
-  border-color: #646cff;
+.spin-btn:active {
+  transform: scale(0.95);
 }
 
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  .card {
-    background-color: #f9f9f9;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
+.bottom-nav {
+  position: fixed;
+  bottom: 20px;
+  width: 90%;
+  max-width: 440px;
+  background: linear-gradient(90deg, #aa00ff, #d500f9);
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
 }

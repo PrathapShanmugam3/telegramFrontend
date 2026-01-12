@@ -1,10 +1,14 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 function App() {
   const [status, setStatus] = useState('Initializing...');
   const [userInfo, setUserInfo] = useState(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [balance, setBalance] = useState(95.47);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const wheelRef = useRef(null);
 
   useEffect(() => {
     const authUser = async () => {
@@ -19,6 +23,7 @@ function App() {
         if (window.Telegram && window.Telegram.WebApp) {
           const tg = window.Telegram.WebApp;
           tg.ready();
+          tg.expand(); // Expand to full height
           user = tg.initDataUnsafe?.user;
         }
 
@@ -32,7 +37,7 @@ function App() {
         }
 
         if (!user) {
-          setStatus('Error: Could not identify user.');
+          setStatus('Error: Could not identify user. Please open in Telegram.');
           return;
         }
 
@@ -61,12 +66,14 @@ function App() {
         const data = await response.json();
 
         if (data.blocked) {
-          setStatus('Blocked: Multi-account detected.');
+          setIsBlocked(true);
+          setStatus(data.reason || 'Blocked: Multi-account detected.');
           if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.close();
+            // Optional: Close app after delay
+            // window.Telegram.WebApp.close();
           }
         } else {
-          setStatus('Welcome, ' + user.first_name + '!');
+          setStatus('Authenticated');
           setUserInfo({ ...user, deviceId });
         }
 
@@ -79,18 +86,85 @@ function App() {
     authUser();
   }, []);
 
+  const handleSpin = () => {
+    if (isSpinning) return;
+    setIsSpinning(true);
+
+    // Random rotation between 720 and 1440 degrees
+    const rotation = Math.floor(Math.random() * 720) + 720;
+
+    if (wheelRef.current) {
+      wheelRef.current.style.transform = `rotate(${rotation}deg)`;
+    }
+
+    setTimeout(() => {
+      setIsSpinning(false);
+      setBalance(prev => prev + 10); // Mock win
+      // Reset rotation for next spin (optional logic needed for continuous spins)
+    }, 3000);
+  };
+
+  // Render Blocked Screen
+  if (isBlocked) {
+    return (
+      <div className="container">
+        <div className="auth-card" style={{ borderColor: '#ff4444' }}>
+          <h1 style={{ color: '#ff4444' }}>Access Denied</h1>
+          <p>{status}</p>
+          <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>ID: {userInfo?.id || 'Unknown'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Dashboard if Authenticated
+  if (userInfo) {
+    return (
+      <div className="container">
+        {/* Header */}
+        <div className="header">
+          <div className="user-profile">
+            <div className="avatar">{userInfo.first_name[0]}</div>
+            <span>{userInfo.first_name}</span>
+          </div>
+          <div className="settings-icon">⚙️</div>
+        </div>
+
+        {/* Balance */}
+        <div className="balance-section">
+          <div className="balance-amount">₹{balance.toFixed(2)}</div>
+          <div className="cashout-progress">
+            Only ₹{(100 - balance).toFixed(2)} to cash out ₹100!
+          </div>
+        </div>
+
+        {/* Spin Wheel */}
+        <div className="wheel-container">
+          <div className="spin-arrow"></div>
+          <div className="wheel" ref={wheelRef}></div>
+          <div className="wheel-center">SPIN</div>
+        </div>
+
+        {/* Spin Button */}
+        <button className="spin-btn" onClick={handleSpin} disabled={isSpinning}>
+          {isSpinning ? 'Spinning...' : 'SPIN NOW'}
+        </button>
+
+        {/* Bottom Invite */}
+        <div className="bottom-nav">
+          Invite for Spins! 🚀
+        </div>
+      </div>
+    );
+  }
+
+  // Loading / Error Screen
   return (
     <div className="container">
-      <h1>Triple-Lock Security</h1>
-      <div className="card">
-        <h2>Status: {status}</h2>
-        {userInfo && (
-          <div className="user-info">
-            <p><strong>Telegram ID:</strong> {userInfo.id}</p>
-            <p><strong>Device ID:</strong> {userInfo.deviceId}</p>
-            <p><strong>Name:</strong> {userInfo.first_name}</p>
-          </div>
-        )}
+      <div className="auth-card">
+        <h2>Triple-Lock Security</h2>
+        <p>{status}</p>
+        <div className="loader" style={{ marginTop: '20px' }}>🔒 Verifying...</div>
       </div>
     </div>
   );
