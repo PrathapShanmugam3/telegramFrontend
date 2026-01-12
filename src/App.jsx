@@ -64,7 +64,7 @@ function App() {
 
       } catch (error) {
         console.error('Auth error:', error);
-        setStatus('Authentication failed.');
+        setStatus(`Authentication failed: ${error.message}`);
       }
     };
 
