@@ -40,6 +40,9 @@ function App() {
 
         // Send to Backend
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        // Debug: Show API URL
+        console.log('Using API URL:', apiUrl);
+
         const response = await fetch(`${apiUrl}/secure-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -49,6 +52,11 @@ function App() {
             name: user.first_name
           })
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server Error ${response.status}: ${errorText}`);
+        }
 
         const data = await response.json();
 
@@ -64,7 +72,7 @@ function App() {
 
       } catch (error) {
         console.error('Auth error:', error);
-        setStatus(`Authentication failed: ${error.message}`);
+        setStatus(`Auth Failed: ${error.message} (API: ${import.meta.env.VITE_API_URL})`);
       }
     };
 
