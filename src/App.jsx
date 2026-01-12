@@ -39,7 +39,7 @@ function App() {
         setStatus('Authenticating...');
 
         // Send to Backend
-        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://telegram-backend-jet.vercel.app';
         // Debug: Show API URL
         console.log('Using API URL:', apiUrl);
 
