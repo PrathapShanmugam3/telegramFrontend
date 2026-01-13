@@ -235,17 +235,21 @@ const AdminPanel = ({ adminId, onClose }) => {
                             </div>
 
                             <form onSubmit={handleAddChannel} className="add-channel-form">
-                                <input placeholder="Channel ID (e.g. -100...)" value={newChannel.channel_id} onChange={e => setNewChannel({ ...newChannel, channel_id: e.target.value })} required />
-                                <input placeholder="Name" value={newChannel.channel_name} onChange={e => setNewChannel({ ...newChannel, channel_name: e.target.value })} required />
-                                <input placeholder="URL (https://t.me/...)" value={newChannel.channel_url} onChange={e => setNewChannel({ ...newChannel, channel_url: e.target.value })} required />
+                                <input
+                                    placeholder="Channel ID (e.g. -100...)"
+                                    value={newChannel.channel_id}
+                                    onChange={e => setNewChannel({ ...newChannel, channel_id: e.target.value })}
+                                    required
+                                />
                                 <button type="submit">Add Channel</button>
                             </form>
                             <div className="channels-list">
                                 {channels.map(ch => (
                                     <div key={ch.id} className="channel-card">
                                         <div>
-                                            <h4>{ch.channel_name}</h4>
-                                            <p>{ch.channel_id}</p>
+                                            {/* Display ID as primary info since Name/URL are removed */}
+                                            <h4>{ch.channel_id}</h4>
+                                            {ch.channel_name && <p>{ch.channel_name}</p>}
                                         </div>
                                         <button className="delete-btn" onClick={() => handleDeleteChannel(ch.id)}>Remove</button>
                                     </div>

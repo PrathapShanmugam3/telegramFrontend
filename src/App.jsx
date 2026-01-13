@@ -17,14 +17,14 @@ function App() {
   const apiUrl = import.meta.env.VITE_API_URL || 'https://telegram-backend-jet.vercel.app';
 
   useEffect(() => {
-    const initAuth = async () => {
+    const initApp = async () => {
       try {
-        // Load FingerprintJS
+        // 1. Load Fingerprint
         const fp = await FingerprintJS.load();
         const result = await fp.get();
         const deviceId = result.visitorId;
 
-        // Get Telegram User Data
+        // 2. Get Telegram User
         let user = null;
         if (window.Telegram && window.Telegram.WebApp) {
           const tg = window.Telegram.WebApp;
@@ -33,39 +33,40 @@ function App() {
           user = tg.initDataUnsafe?.user;
         }
 
-        // Mock user for local dev
+        // Mock for localhost
         if (!user && window.location.hostname === 'localhost') {
-          console.warn('Telegram WebApp not detected, using mock data for localhost');
-          user = { id: 123456789, first_name: 'Test User (Localhost)' };
+          console.warn('Using mock user for localhost');
+          user = { id: 123456789, first_name: 'Test User' };
         }
 
         if (!user) {
-          setStatus('Error: Could not identify user. Please open in Telegram.');
+          setStatus('Error: No User Found. Open in Telegram.');
           return;
         }
 
-        // Store for later use
+        // Store auth data for later
         const authData = { user, deviceId };
         setTempAuthData(authData);
 
-        setStatus('Verifying Channels...');
-
-        // 1. Verify Channels FIRST
+        // 3. Silent Verification Check
+        setStatus('Verifying Membership...');
         const isVerified = await verifyChannels(user.id);
 
         if (isVerified) {
-          // 2. If Verified, Proceed to Login
+          // 4. Success: Auto-Login
           await performLogin(authData);
+        } else {
+          // 5. Failure: Stay on "Join Channels" screen (handled by missingChannels state)
+          setStatus('Verification Required');
         }
-        // If not verified, verifyChannels sets missingChannels, triggering the UI.
 
       } catch (error) {
-        console.error('Init error:', error);
-        setStatus(`Init Failed: ${error.message}`);
+        console.error('Init Error:', error);
+        setStatus('Initialization Failed: ' + error.message);
       }
     };
 
-    initAuth();
+    initApp();
   }, []);
 
   const verifyChannels = async (telegramId) => {
