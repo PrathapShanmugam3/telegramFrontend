@@ -185,16 +185,32 @@ function App() {
             {missingChannels.map(ch => (
               <button
                 key={ch.id}
-                onClick={() => {
-                  const url = ch.channel_url;
-                  if (url) {
-                    if (window.Telegram && window.Telegram.WebApp) {
+                onClick={(e) => {
+                  e.preventDefault();
+                  let url = ch.channel_url;
+                  if (!url) return alert('Invalid Link');
+                  url = url.trim();
+
+                  // Normalize URL
+                  if (url.startsWith('@')) {
+                    url = `https://t.me/${url.substring(1)}`;
+                  } else if (!url.startsWith('http')) {
+                    url = `https://t.me/${url}`; // Assume username if no protocol
+                  }
+
+                  // alert(`Debug: Opening ${url}`); // Uncomment if needed
+
+                  console.log('Opening URL:', url);
+
+                  if (window.Telegram && window.Telegram.WebApp) {
+                    try {
                       window.Telegram.WebApp.openTgLink(url);
-                    } else {
+                    } catch (err) {
+                      console.error('openTgLink error:', err);
                       window.open(url, '_blank');
                     }
                   } else {
-                    alert('Invalid Channel Link');
+                    window.open(url, '_blank');
                   }
                 }}
                 className="channel-btn"
