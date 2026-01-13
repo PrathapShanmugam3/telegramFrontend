@@ -10,6 +10,7 @@ const AdminPanel = ({ adminId, onClose }) => {
     const [editingUser, setEditingUser] = useState(null);
     const [newChannel, setNewChannel] = useState({ channel_id: '', channel_name: '', channel_url: '' });
     const [newOrigin, setNewOrigin] = useState('');
+    const [resolveUsername, setResolveUsername] = useState('');
 
     const apiUrl = import.meta.env.VITE_API_URL || 'https://telegram-backend-jet.vercel.app';
 
@@ -122,6 +123,24 @@ const AdminPanel = ({ adminId, onClose }) => {
         }
     };
 
+    const handleResolveId = async () => {
+        if (!resolveUsername) return alert('Enter a username');
+        try {
+            const res = await fetch(`${apiUrl}/admin/resolve-channel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-id': String(adminId) },
+                body: JSON.stringify({ username: resolveUsername })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            alert(`Channel Found!\nTitle: ${data.title}\nID: ${data.id}`);
+            setNewChannel({ ...newChannel, channel_id: data.id, channel_name: data.title });
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    };
+
     // ... (handleDelete and handleUpdate for users remain same) ...
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this user?')) return;
@@ -196,6 +215,25 @@ const AdminPanel = ({ adminId, onClose }) => {
 
                     {!loading && activeTab === 'channels' && (
                         <div className="channels-section">
+
+                            {/* Tool to Find Channel ID */}
+                            <div className="resolve-tool" style={{ marginBottom: '20px', padding: '15px', background: '#333', borderRadius: '8px' }}>
+                                <h4>Find Channel ID</h4>
+                                <p style={{ fontSize: '0.9rem', color: '#aaa', marginBottom: '10px' }}>
+                                    Enter Public Channel Username (e.g. @mychannel) to find its ID. <br />
+                                    For Private Channels, you must add the bot as Admin and use a tool like @JsonDumpBot to find the ID (-100...).
+                                </p>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <input
+                                        placeholder="@username"
+                                        value={resolveUsername}
+                                        onChange={e => setResolveUsername(e.target.value)}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <button onClick={handleResolveId} style={{ background: '#666' }}>Find ID</button>
+                                </div>
+                            </div>
+
                             <form onSubmit={handleAddChannel} className="add-channel-form">
                                 <input placeholder="Channel ID (e.g. -100...)" value={newChannel.channel_id} onChange={e => setNewChannel({ ...newChannel, channel_id: e.target.value })} required />
                                 <input placeholder="Name" value={newChannel.channel_name} onChange={e => setNewChannel({ ...newChannel, channel_name: e.target.value })} required />

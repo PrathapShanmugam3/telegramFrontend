@@ -11,14 +11,14 @@ function App() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [missingChannels, setMissingChannels] = useState([]);
+  const [tempAuthData, setTempAuthData] = useState(null); // Store data for pre-login verification
   const wheelRef = useRef(null);
 
   const apiUrl = import.meta.env.VITE_API_URL || 'https://telegram-backend-jet.vercel.app';
 
   useEffect(() => {
-    const authUser = async () => {
+    const initAuth = async () => {
       try {
-        // ... (Fingerprint & Telegram User logic) ...
         // Load FingerprintJS
         const fp = await FingerprintJS.load();
         const result = await fp.get();
@@ -29,17 +29,14 @@ function App() {
         if (window.Telegram && window.Telegram.WebApp) {
           const tg = window.Telegram.WebApp;
           tg.ready();
-          tg.expand(); // Expand to full height
+          tg.expand();
           user = tg.initDataUnsafe?.user;
         }
 
-        // Mock user for local dev ONLY
+        // Mock user for local dev
         if (!user && window.location.hostname === 'localhost') {
           console.warn('Telegram WebApp not detected, using mock data for localhost');
-          user = {
-            id: 123456789,
-            first_name: 'Test User (Localhost)'
-          };
+          user = { id: 123456789, first_name: 'Test User (Localhost)' };
         }
 
         if (!user) {
@@ -47,62 +44,28 @@ function App() {
           return;
         }
 
-        setStatus('Authenticating...');
+        // Store for later use
+        const authData = { user, deviceId };
+        setTempAuthData(authData);
 
-        // Send to Backend
-        console.log('Using API URL:', apiUrl);
+        setStatus('Verifying Channels...');
 
-        const response = await fetch(`${apiUrl}/secure-login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegram_id: user.id,
-            device_id: deviceId,
-            name: user.first_name,
-            username: user.username,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            photo_url: user.photo_url,
-            auth_date: window.Telegram?.WebApp?.initDataUnsafe?.auth_date
-          })
-        });
+        // 1. Verify Channels FIRST
+        const isVerified = await verifyChannels(user.id);
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Server Error ${response.status}: ${errorText}`);
+        if (isVerified) {
+          // 2. If Verified, Proceed to Login
+          await performLogin(authData);
         }
-
-        const data = await response.json();
-
-        if (data.blocked) {
-          setIsBlocked(true);
-          setStatus(data.reason || 'Blocked: Multi-account detected.');
-        } else {
-          // Set User Info immediately so we have it
-          setUserInfo({ ...user, deviceId, role: data.role });
-
-          // Check Channel Membership
-          try {
-            await verifyChannels(user.id);
-            setStatus('Authenticated');
-          } catch (vError) {
-            console.error('Verification check failed:', vError);
-            setStatus('Verification Check Failed: ' + vError.message);
-            // If check failed, we don't want to show dashboard. 
-            // But userInfo is set. We rely on missingChannels logic or status.
-            // If network error, missingChannels is [], so dashboard shows.
-            // We should probably reset userInfo if check fails hard.
-            setUserInfo(null);
-          }
-        }
+        // If not verified, verifyChannels sets missingChannels, triggering the UI.
 
       } catch (error) {
-        console.error('Auth error:', error);
-        setStatus(`Auth Failed: ${error.message} (API: ${apiUrl})`);
+        console.error('Init error:', error);
+        setStatus(`Init Failed: ${error.message}`);
       }
     };
 
-    authUser();
+    initAuth();
   }, []);
 
   const verifyChannels = async (telegramId) => {
@@ -113,19 +76,68 @@ function App() {
         body: JSON.stringify({ telegram_id: telegramId })
       });
 
-      if (!res.ok) {
-        throw new Error(`Verification API Error: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`Verification API Error: ${res.status}`);
 
       const data = await res.json();
       if (!data.verified) {
         setMissingChannels(data.missing_channels);
+        return false;
       } else {
         setMissingChannels([]);
+        return true;
       }
     } catch (error) {
       console.error('Verification failed:', error);
-      throw error; // Re-throw to be caught by authUser
+      setStatus('Verification Check Failed: ' + error.message);
+      return false;
+    }
+  };
+
+  const performLogin = async ({ user, deviceId }) => {
+    setStatus('Authenticating...');
+    try {
+      console.log('Using API URL:', apiUrl);
+      const response = await fetch(`${apiUrl}/secure-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegram_id: user.id,
+          device_id: deviceId,
+          name: user.first_name,
+          username: user.username,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          photo_url: user.photo_url,
+          auth_date: window.Telegram?.WebApp?.initDataUnsafe?.auth_date
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server Error ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.blocked) {
+        setIsBlocked(true);
+        setStatus(data.reason || 'Blocked: Multi-account detected.');
+      } else {
+        setStatus('Authenticated');
+        setUserInfo({ ...user, deviceId, role: data.role });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setStatus(`Login Failed: ${error.message}`);
+    }
+  };
+
+  const handleManualVerify = async () => {
+    if (!tempAuthData) return;
+    setStatus('Verifying...');
+    const isVerified = await verifyChannels(tempAuthData.user.id);
+    if (isVerified) {
+      await performLogin(tempAuthData);
     }
   };
 
@@ -170,14 +182,32 @@ function App() {
           <p>Please join the following channels to continue:</p>
           <div className="channels-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
             {missingChannels.map(ch => (
-              <a key={ch.id} href={ch.channel_url} target="_blank" rel="noopener noreferrer" className="channel-btn" style={{
-                padding: '12px', background: '#0088cc', color: 'white', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold'
-              }}>
+              <button
+                key={ch.id}
+                onClick={() => {
+                  if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.openTgLink(ch.channel_url);
+                  } else {
+                    window.open(ch.channel_url, '_blank');
+                  }
+                }}
+                className="channel-btn"
+                style={{
+                  padding: '12px',
+                  background: '#0088cc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  width: '100%'
+                }}
+              >
                 Join {ch.channel_name}
-              </a>
+              </button>
             ))}
           </div>
-          <button onClick={() => verifyChannels(userInfo?.id)} className="spin-btn" style={{ fontSize: '1rem', padding: '10px 20px' }}>
+          <button onClick={handleManualVerify} className="spin-btn" style={{ fontSize: '1rem', padding: '10px 20px' }}>
             🔄 Verify Membership
           </button>
         </div>
