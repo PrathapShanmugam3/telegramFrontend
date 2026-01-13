@@ -293,8 +293,18 @@ function App() {
     <div className="container">
       <div className="auth-card">
         <h2>Triple-Lock Security</h2>
-        <p>{status}</p>
-        <div className="loader" style={{ marginTop: '20px' }}>🔒 Verifying...</div>
+
+        {status.includes('Error') ? (
+          <div style={{ marginTop: '20px' }}>
+            <p style={{ color: '#ff6b6b', fontWeight: 'bold' }}>{status}</p>
+            {/* Optional: Add a manual retry or mock login button for dev */}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
+            <div className="spinner"></div>
+            <p style={{ marginTop: '15px' }}>{status}</p>
+          </div>
+        )}
       </div>
     </div>
   );
