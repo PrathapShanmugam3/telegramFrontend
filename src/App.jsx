@@ -78,16 +78,27 @@ function App() {
           setIsBlocked(true);
           setStatus(data.reason || 'Blocked: Multi-account detected.');
         } else {
-          // Check Channel Membership
-          await verifyChannels(user.id);
-
-          setStatus('Authenticated');
+          // Set User Info immediately so we have it
           setUserInfo({ ...user, deviceId, role: data.role });
+
+          // Check Channel Membership
+          try {
+            await verifyChannels(user.id);
+            setStatus('Authenticated');
+          } catch (vError) {
+            console.error('Verification check failed:', vError);
+            setStatus('Verification Check Failed: ' + vError.message);
+            // If check failed, we don't want to show dashboard. 
+            // But userInfo is set. We rely on missingChannels logic or status.
+            // If network error, missingChannels is [], so dashboard shows.
+            // We should probably reset userInfo if check fails hard.
+            setUserInfo(null);
+          }
         }
 
       } catch (error) {
         console.error('Auth error:', error);
-        setStatus(`Auth Failed: ${error.message} (API: ${import.meta.env.VITE_API_URL})`);
+        setStatus(`Auth Failed: ${error.message} (API: ${apiUrl})`);
       }
     };
 
@@ -101,6 +112,11 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: telegramId })
       });
+
+      if (!res.ok) {
+        throw new Error(`Verification API Error: ${res.status}`);
+      }
+
       const data = await res.json();
       if (!data.verified) {
         setMissingChannels(data.missing_channels);
@@ -109,6 +125,7 @@ function App() {
       }
     } catch (error) {
       console.error('Verification failed:', error);
+      throw error; // Re-throw to be caught by authUser
     }
   };
 
