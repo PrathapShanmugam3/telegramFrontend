@@ -177,115 +177,133 @@ const AdminPanel = ({ adminId, onClose }) => {
         <div className="admin-overlay">
             <div className="admin-container">
                 <div className="admin-header">
-                    <div className="tabs">
-                        <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>Users</button>
-                        <button className={activeTab === 'channels' ? 'active' : ''} onClick={() => setActiveTab('channels')}>Channels</button>
-                        <button className={activeTab === 'origins' ? 'active' : ''} onClick={() => setActiveTab('origins')}>Origins</button>
+                    <div className="admin-tabs">
+                        <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Users</button>
+                        <button className={`tab-btn ${activeTab === 'channels' ? 'active' : ''}`} onClick={() => setActiveTab('channels')}>Channels</button>
+                        <button className={`tab-btn ${activeTab === 'origins' ? 'active' : ''}`} onClick={() => setActiveTab('origins')}>Origins</button>
                     </div>
-                    <button className="close-btn" onClick={onClose}>×</button>
+                    <button className="close-btn" onClick={onClose}>&times;</button>
                 </div>
 
-                <div className="admin-content">
-                    {loading && <div className="admin-loader">Loading...</div>}
+                {loading ? (
+                    <div className="loader"></div>
+                ) : (
+                    <>
+                        {activeTab === 'users' && (
+                            <div className="users-list">
+                                {users.map(user => (
+                                    <div key={user.id} className="user-card">
+                                        <div className="user-info">
+                                            <div className="user-avatar">
+                                                {user.photo_url ? <img src={user.photo_url} alt="pic" /> : (user.first_name?.[0] || '?')}
+                                            </div>
+                                            <div>
+                                                <h3>{user.first_name} {user.last_name}</h3>
+                                                <p className="sub-text">@{user.username || 'No Username'}</p>
+                                                <p className="sub-text">ID: {user.telegram_id}</p>
+                                                <div style={{ marginTop: '5px' }}>
+                                                    <span className={`badge ${user.role === 'admin' ? 'admin' : 'user'}`}>{user.role}</span>
+                                                    {user.is_blocked && <span className="badge blocked">BLOCKED</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="user-actions">
+                                            <button className="edit-btn" onClick={() => setEditingUser(user)}>Edit</button>
+                                            <button className="delete-btn" onClick={() => handleDelete(user.id)}>Delete</button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
-                    {!loading && activeTab === 'users' && (
-                        <div className="users-list">
-                            {users.map(user => (
-                                <div key={user.id} className="user-card">
-                                    <div className="user-info">
-                                        <div className="user-avatar">
-                                            {user.photo_url ? <img src={user.photo_url} alt="pic" /> : (user.first_name?.[0] || '?')}
+                        {activeTab === 'channels' && (
+                            <div className="channels-section">
+                                <form onSubmit={handleAddChannel} className="add-channel-form">
+                                    <input
+                                        placeholder="Channel Name"
+                                        value={newChannel.channel_name}
+                                        onChange={e => setNewChannel({ ...newChannel, channel_name: e.target.value })}
+                                        required
+                                    />
+                                    <input
+                                        placeholder="Channel Link (e.g. https://t.me/username)"
+                                        value={newChannel.channel_url}
+                                        onChange={e => setNewChannel({ ...newChannel, channel_url: e.target.value })}
+                                        required
+                                    />
+                                    <button type="submit">Add Channel</button>
+                                </form>
+                                <div className="channels-list">
+                                    {channels.map(ch => (
+                                        <div key={ch.id} className="channel-card">
+                                            <div className="channel-info">
+                                                <h4>{ch.channel_name}</h4>
+                                                <p>{ch.channel_url}</p>
+                                            </div>
+                                            <button className="delete-btn" onClick={() => handleDeleteChannel(ch.id)}>Remove</button>
                                         </div>
-                                        <div>
-                                            <h3>{user.first_name} {user.last_name}</h3>
-                                            <p className="sub-text">@{user.username || 'No Username'}</p>
-                                            <p className="sub-text">ID: {user.telegram_id}</p>
-                                            <span className={`badge ${user.role}`}>{user.role}</span>
-                                            {user.is_blocked ? <span className="badge blocked">BLOCKED</span> : null}
-                                        </div>
-                                    </div>
-                                    <div className="user-actions">
-                                        <button onClick={() => setEditingUser(user)}>Edit</button>
-                                        <button className="delete-btn" onClick={() => handleDelete(user.id)}>Delete</button>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            </div>
+                        )}
 
-                    {!loading && activeTab === 'channels' && (
-                        <div className="channels-section">
-                            <form onSubmit={handleAddChannel} className="add-channel-form">
-                                <input
-                                    placeholder="Channel Name"
-                                    value={newChannel.channel_name}
-                                    onChange={e => setNewChannel({ ...newChannel, channel_name: e.target.value })}
-                                    required
-                                />
-                                <input
-                                    placeholder="Channel Link (e.g. https://t.me/username)"
-                                    value={newChannel.channel_url}
-                                    onChange={e => setNewChannel({ ...newChannel, channel_url: e.target.value })}
-                                    required
-                                />
-                                <button type="submit">Add Channel</button>
-                            </form>
-                            <div className="channels-list">
-                                {channels.map(ch => (
-                                    <div key={ch.id} className="channel-card">
-                                        <div className="channel-info">
-                                            <h4>{ch.channel_name}</h4>
-                                            <p>{ch.channel_url}</p>
+                        {activeTab === 'origins' && (
+                            <div className="channels-section">
+                                <form onSubmit={handleAddOrigin} className="add-channel-form">
+                                    <input
+                                        placeholder="Origin URL (e.g. https://myapp.vercel.app)"
+                                        value={newOrigin}
+                                        onChange={e => setNewOrigin(e.target.value)}
+                                        required
+                                    />
+                                    <button type="submit">Add Origin</button>
+                                </form>
+                                <div className="channels-list">
+                                    {origins.map(origin => (
+                                        <div key={origin.id} className="channel-card">
+                                            <div className="channel-info">
+                                                <h4>{origin.origin_url}</h4>
+                                            </div>
+                                            <button className="delete-btn" onClick={() => handleDeleteOrigin(origin.id)}>Remove</button>
                                         </div>
-                                        <button className="delete-btn" onClick={() => handleDeleteChannel(ch.id)}>Remove</button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
-
-                    {!loading && activeTab === 'origins' && (
-                        <div className="channels-section">
-                            <form onSubmit={handleAddOrigin} className="add-channel-form">
-                                <input placeholder="Origin URL (e.g. https://myapp.vercel.app)" value={newOrigin} onChange={e => setNewOrigin(e.target.value)} required />
-                                <button type="submit">Add Origin</button>
-                            </form>
-                            <div className="channels-list">
-                                {origins.map(origin => (
-                                    <div key={origin.id} className="channel-card">
-                                        <div>
-                                            <h4>{origin.origin_url}</h4>
-                                        </div>
-                                        <button className="delete-btn" onClick={() => handleDeleteOrigin(origin.id)}>Remove</button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {editingUser && (
-                    <div className="edit-modal">
-                        <form onSubmit={handleUpdate}>
-                            <h3>Edit User</h3>
-                            <label>Name: <input value={editingUser.name || ''} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })} /></label>
-                            <label>Role:
-                                <select value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}>
-                                    <option value="user">User</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </label>
-                            <label>Blocked:
-                                <input type="checkbox" checked={editingUser.is_blocked} onChange={e => setEditingUser({ ...editingUser, is_blocked: e.target.checked })} />
-                            </label>
-                            <div className="modal-actions">
-                                <button type="button" onClick={() => setEditingUser(null)}>Cancel</button>
-                                <button type="submit" className="save-btn">Save</button>
-                            </div>
-                        </form>
-                    </div>
+                        )}
+                    </>
                 )}
             </div>
+
+            {editingUser && (
+                <div className="edit-modal">
+                    <h3>Edit User</h3>
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        handleUpdate(editingUser.id, { role: editingUser.role, is_blocked: editingUser.is_blocked });
+                        setEditingUser(null);
+                    }}>
+                        <label>
+                            Role:
+                            <select value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}>
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+                        <label>
+                            Blocked:
+                            <input
+                                type="checkbox"
+                                checked={editingUser.is_blocked}
+                                onChange={e => setEditingUser({ ...editingUser, is_blocked: e.target.checked })}
+                            />
+                        </label>
+                        <div className="modal-actions">
+                            <button type="button" onClick={() => setEditingUser(null)} style={{ background: '#555', color: 'white' }}>Cancel</button>
+                            <button type="submit" className="save-btn">Save</button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 };
