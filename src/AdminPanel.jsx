@@ -236,10 +236,15 @@ const AdminPanel = ({ adminId, onClose }) => {
 
                             <form onSubmit={handleAddChannel} className="add-channel-form">
                                 <input
-                                    placeholder="Channel ID (e.g. -100...)"
+                                    placeholder="Channel ID (Private) OR @username"
                                     value={newChannel.channel_id}
                                     onChange={e => setNewChannel({ ...newChannel, channel_id: e.target.value })}
-                                    required
+                                />
+                                <div style={{ textAlign: 'center', margin: '5px' }}>OR</div>
+                                <input
+                                    placeholder="Channel Link (Public Only)"
+                                    value={newChannel.channel_url}
+                                    onChange={e => setNewChannel({ ...newChannel, channel_url: e.target.value })}
                                 />
                                 <button type="submit">Add Channel</button>
                             </form>
