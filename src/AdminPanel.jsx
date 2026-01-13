@@ -15,13 +15,20 @@ const AdminPanel = ({ adminId, onClose }) => {
     const fetchUsers = async () => {
         try {
             const res = await fetch(`${apiUrl}/admin/users`, {
-                headers: { 'x-admin-id': adminId }
+                headers: { 'x-admin-id': String(adminId) }
             });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Error ${res.status}: ${text}`);
+            }
+
             const data = await res.json();
             setUsers(data);
             setLoading(false);
         } catch (error) {
-            alert('Failed to fetch users');
+            console.error('Fetch Users Error:', error);
+            alert('Failed to fetch users: ' + error.message);
             setLoading(false);
         }
     };
