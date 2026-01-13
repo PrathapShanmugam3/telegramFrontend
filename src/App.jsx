@@ -10,11 +10,15 @@ function App() {
   const [balance, setBalance] = useState(95.47);
   const [isSpinning, setIsSpinning] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [missingChannels, setMissingChannels] = useState([]);
   const wheelRef = useRef(null);
+
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://telegram-backend-jet.vercel.app';
 
   useEffect(() => {
     const authUser = async () => {
       try {
+        // ... (Fingerprint & Telegram User logic) ...
         // Load FingerprintJS
         const fp = await FingerprintJS.load();
         const result = await fp.get();
@@ -46,8 +50,6 @@ function App() {
         setStatus('Authenticating...');
 
         // Send to Backend
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://telegram-backend-jet.vercel.app';
-        // Debug: Show API URL
         console.log('Using API URL:', apiUrl);
 
         const response = await fetch(`${apiUrl}/secure-login`, {
@@ -75,13 +77,11 @@ function App() {
         if (data.blocked) {
           setIsBlocked(true);
           setStatus(data.reason || 'Blocked: Multi-account detected.');
-          if (window.Telegram && window.Telegram.WebApp) {
-            // Optional: Close app after delay
-            // window.Telegram.WebApp.close();
-          }
         } else {
+          // Check Channel Membership
+          await verifyChannels(user.id);
+
           setStatus('Authenticated');
-          // Merge Telegram user data with Backend data (role)
           setUserInfo({ ...user, deviceId, role: data.role });
         }
 
@@ -94,7 +94,26 @@ function App() {
     authUser();
   }, []);
 
+  const verifyChannels = async (telegramId) => {
+    try {
+      const res = await fetch(`${apiUrl}/verify-channels`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id: telegramId })
+      });
+      const data = await res.json();
+      if (!data.verified) {
+        setMissingChannels(data.missing_channels);
+      } else {
+        setMissingChannels([]);
+      }
+    } catch (error) {
+      console.error('Verification failed:', error);
+    }
+  };
+
   const handleSpin = () => {
+    // ... (existing handleSpin) ...
     if (isSpinning) return;
     setIsSpinning(true);
 
@@ -120,6 +139,30 @@ function App() {
           <h1 style={{ color: '#ff4444' }}>Access Denied</h1>
           <p>{status}</p>
           <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>ID: {userInfo?.id || 'Unknown'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Join Channels Screen
+  if (missingChannels.length > 0) {
+    return (
+      <div className="container">
+        <div className="auth-card">
+          <h2>🔒 Verification Required</h2>
+          <p>Please join the following channels to continue:</p>
+          <div className="channels-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '20px 0' }}>
+            {missingChannels.map(ch => (
+              <a key={ch.id} href={ch.channel_url} target="_blank" rel="noopener noreferrer" className="channel-btn" style={{
+                padding: '12px', background: '#0088cc', color: 'white', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold'
+              }}>
+                Join {ch.channel_name}
+              </a>
+            ))}
+          </div>
+          <button onClick={() => verifyChannels(userInfo?.id)} className="spin-btn" style={{ fontSize: '1rem', padding: '10px 20px' }}>
+            🔄 Verify Membership
+          </button>
         </div>
       </div>
     );

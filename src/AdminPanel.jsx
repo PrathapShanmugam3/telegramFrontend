@@ -2,37 +2,127 @@ import { useEffect, useState } from 'react';
 import './AdminPanel.css';
 
 const AdminPanel = ({ adminId, onClose }) => {
+    const [activeTab, setActiveTab] = useState('users');
     const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [channels, setChannels] = useState([]);
+    const [origins, setOrigins] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [newChannel, setNewChannel] = useState({ channel_id: '', channel_name: '', channel_url: '' });
+    const [newOrigin, setNewOrigin] = useState('');
 
     const apiUrl = import.meta.env.VITE_API_URL || 'https://telegram-backend-jet.vercel.app';
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        if (activeTab === 'users') fetchUsers();
+        if (activeTab === 'channels') fetchChannels();
+        if (activeTab === 'origins') fetchOrigins();
+    }, [activeTab]);
 
     const fetchUsers = async () => {
+        setLoading(true);
         try {
             const res = await fetch(`${apiUrl}/admin/users`, {
                 headers: { 'x-admin-id': String(adminId) }
             });
-
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`Error ${res.status}: ${text}`);
-            }
-
-            const data = await res.json();
-            setUsers(data);
-            setLoading(false);
+            if (!res.ok) throw new Error(await res.text());
+            setUsers(await res.json());
         } catch (error) {
-            console.error('Fetch Users Error:', error);
             alert('Failed to fetch users: ' + error.message);
+        } finally {
             setLoading(false);
         }
     };
 
+    const fetchChannels = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${apiUrl}/admin/channels`, {
+                headers: { 'x-admin-id': String(adminId) }
+            });
+            if (!res.ok) throw new Error(await res.text());
+            setChannels(await res.json());
+        } catch (error) {
+            alert('Failed to fetch channels: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchOrigins = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${apiUrl}/admin/origins`, {
+                headers: { 'x-admin-id': String(adminId) }
+            });
+            if (!res.ok) throw new Error(await res.text());
+            setOrigins(await res.json());
+        } catch (error) {
+            alert('Failed to fetch origins: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddChannel = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${apiUrl}/admin/channels`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-id': String(adminId) },
+                body: JSON.stringify(newChannel)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            setNewChannel({ channel_id: '', channel_name: '', channel_url: '' });
+            fetchChannels();
+        } catch (error) {
+            alert('Failed to add channel: ' + error.message);
+        }
+    };
+
+    const handleDeleteChannel = async (id) => {
+        if (!confirm('Delete this channel?')) return;
+        try {
+            await fetch(`${apiUrl}/admin/channels/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-id': String(adminId) }
+            });
+            fetchChannels();
+        } catch (error) {
+            alert('Failed to delete channel');
+        }
+    };
+
+    const handleAddOrigin = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${apiUrl}/admin/origins`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-id': String(adminId) },
+                body: JSON.stringify({ origin_url: newOrigin })
+            });
+            if (!res.ok) throw new Error(await res.text());
+            setNewOrigin('');
+            fetchOrigins();
+        } catch (error) {
+            alert('Failed to add origin: ' + error.message);
+        }
+    };
+
+    const handleDeleteOrigin = async (id) => {
+        if (!confirm('Delete this origin?')) return;
+        try {
+            await fetch(`${apiUrl}/admin/origins/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-id': String(adminId) }
+            });
+            fetchOrigins();
+        } catch (error) {
+            alert('Failed to delete origin');
+        }
+    };
+
+    // ... (handleDelete and handleUpdate for users remain same) ...
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this user?')) return;
         try {
@@ -64,38 +154,86 @@ const AdminPanel = ({ adminId, onClose }) => {
         }
     };
 
-    if (loading) return <div className="admin-loader">Loading Users...</div>;
-
     return (
         <div className="admin-overlay">
             <div className="admin-container">
                 <div className="admin-header">
-                    <h2>Admin Panel</h2>
+                    <div className="tabs">
+                        <button className={activeTab === 'users' ? 'active' : ''} onClick={() => setActiveTab('users')}>Users</button>
+                        <button className={activeTab === 'channels' ? 'active' : ''} onClick={() => setActiveTab('channels')}>Channels</button>
+                        <button className={activeTab === 'origins' ? 'active' : ''} onClick={() => setActiveTab('origins')}>Origins</button>
+                    </div>
                     <button className="close-btn" onClick={onClose}>×</button>
                 </div>
 
-                <div className="users-list">
-                    {users.map(user => (
-                        <div key={user.id} className="user-card">
-                            <div className="user-info">
-                                <div className="user-avatar">
-                                    {user.photo_url ? <img src={user.photo_url} alt="pic" /> : (user.first_name?.[0] || '?')}
-                                </div>
-                                <div>
-                                    <h3>{user.first_name} {user.last_name}</h3>
-                                    <p className="sub-text">@{user.username || 'No Username'}</p>
-                                    <p className="sub-text">ID: {user.telegram_id}</p>
-                                    <span className={`badge ${user.role}`}>{user.role}</span>
-                                    {user.is_blocked ? <span className="badge blocked">BLOCKED</span> : null}
-                                </div>
-                            </div>
+                <div className="admin-content">
+                    {loading && <div className="admin-loader">Loading...</div>}
 
-                            <div className="user-actions">
-                                <button onClick={() => setEditingUser(user)}>Edit</button>
-                                <button className="delete-btn" onClick={() => handleDelete(user.id)}>Delete</button>
+                    {!loading && activeTab === 'users' && (
+                        <div className="users-list">
+                            {users.map(user => (
+                                <div key={user.id} className="user-card">
+                                    <div className="user-info">
+                                        <div className="user-avatar">
+                                            {user.photo_url ? <img src={user.photo_url} alt="pic" /> : (user.first_name?.[0] || '?')}
+                                        </div>
+                                        <div>
+                                            <h3>{user.first_name} {user.last_name}</h3>
+                                            <p className="sub-text">@{user.username || 'No Username'}</p>
+                                            <p className="sub-text">ID: {user.telegram_id}</p>
+                                            <span className={`badge ${user.role}`}>{user.role}</span>
+                                            {user.is_blocked ? <span className="badge blocked">BLOCKED</span> : null}
+                                        </div>
+                                    </div>
+                                    <div className="user-actions">
+                                        <button onClick={() => setEditingUser(user)}>Edit</button>
+                                        <button className="delete-btn" onClick={() => handleDelete(user.id)}>Delete</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!loading && activeTab === 'channels' && (
+                        <div className="channels-section">
+                            <form onSubmit={handleAddChannel} className="add-channel-form">
+                                <input placeholder="Channel ID (e.g. -100...)" value={newChannel.channel_id} onChange={e => setNewChannel({ ...newChannel, channel_id: e.target.value })} required />
+                                <input placeholder="Name" value={newChannel.channel_name} onChange={e => setNewChannel({ ...newChannel, channel_name: e.target.value })} required />
+                                <input placeholder="URL (https://t.me/...)" value={newChannel.channel_url} onChange={e => setNewChannel({ ...newChannel, channel_url: e.target.value })} required />
+                                <button type="submit">Add Channel</button>
+                            </form>
+                            <div className="channels-list">
+                                {channels.map(ch => (
+                                    <div key={ch.id} className="channel-card">
+                                        <div>
+                                            <h4>{ch.channel_name}</h4>
+                                            <p>{ch.channel_id}</p>
+                                        </div>
+                                        <button className="delete-btn" onClick={() => handleDeleteChannel(ch.id)}>Remove</button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    ))}
+                    )}
+
+                    {!loading && activeTab === 'origins' && (
+                        <div className="channels-section">
+                            <form onSubmit={handleAddOrigin} className="add-channel-form">
+                                <input placeholder="Origin URL (e.g. https://myapp.vercel.app)" value={newOrigin} onChange={e => setNewOrigin(e.target.value)} required />
+                                <button type="submit">Add Origin</button>
+                            </form>
+                            <div className="channels-list">
+                                {origins.map(origin => (
+                                    <div key={origin.id} className="channel-card">
+                                        <div>
+                                            <h4>{origin.origin_url}</h4>
+                                        </div>
+                                        <button className="delete-btn" onClick={() => handleDeleteOrigin(origin.id)}>Remove</button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {editingUser && (
