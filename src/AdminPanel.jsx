@@ -233,9 +233,9 @@ const AdminPanel = ({ adminId, onClose }) => {
                             <div className="channels-list">
                                 {channels.map(ch => (
                                     <div key={ch.id} className="channel-card">
-                                        <div>
+                                        <div className="channel-info">
                                             <h4>{ch.channel_name}</h4>
-                                            <p style={{ fontSize: '0.8rem', color: '#aaa' }}>{ch.channel_url}</p>
+                                            <p>{ch.channel_url}</p>
                                         </div>
                                         <button className="delete-btn" onClick={() => handleDeleteChannel(ch.id)}>Remove</button>
                                     </div>
