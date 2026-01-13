@@ -1,0 +1,190 @@
+.admin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.admin-container {
+    background: #1a1a1a;
+    width: 95%;
+    max-width: 600px;
+    height: 90vh;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.admin-header {
+    padding: 16px;
+    background: #252525;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.users-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.user-card {
+    background: #2a2a2a;
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-weight: bold;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sub-text {
+    font-size: 0.8rem;
+    color: #888;
+    margin: 2px 0;
+}
+
+.badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #333;
+    margin-right: 4px;
+    text-transform: uppercase;
+}
+
+.badge.admin {
+    background: #6c5ce7;
+    color: white;
+}
+
+.badge.user {
+    background: #00b894;
+    color: white;
+}
+
+.badge.blocked {
+    background: #d63031;
+    color: white;
+}
+
+.user-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.user-actions button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: #444;
+    color: white;
+}
+
+.user-actions .delete-btn {
+    background: #d63031;
+}
+
+/* Edit Modal */
+.edit-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2d3436;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 300px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.edit-modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.edit-modal label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.edit-modal input,
+.edit-modal select {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.save-btn {
+    background: #00b894;
+    color: white;
+}

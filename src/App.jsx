@@ -1,5 +1,6 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { useEffect, useRef, useState } from 'react';
+import AdminPanel from './AdminPanel';
 import './App.css';
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [balance, setBalance] = useState(95.47);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const wheelRef = useRef(null);
 
   useEffect(() => {
@@ -79,7 +81,8 @@ function App() {
           }
         } else {
           setStatus('Authenticated');
-          setUserInfo({ ...user, deviceId });
+          // Merge Telegram user data with Backend data (role)
+          setUserInfo({ ...user, deviceId, role: data.role });
         }
 
       } catch (error) {
@@ -126,13 +129,23 @@ function App() {
   if (userInfo) {
     return (
       <div className="container">
+        {showAdmin && <AdminPanel adminId={userInfo.id} onClose={() => setShowAdmin(false)} />}
+
         {/* Header */}
         <div className="header">
           <div className="user-profile">
             <div className="avatar">{userInfo.first_name[0]}</div>
-            <span>{userInfo.first_name}</span>
+            <div>
+              <span>{userInfo.first_name}</span>
+              {userInfo.role === 'admin' && <span className="badge admin-badge">ADMIN</span>}
+            </div>
           </div>
-          <div className="settings-icon">⚙️</div>
+          <div className="header-actions">
+            {userInfo.role === 'admin' && (
+              <button className="admin-btn" onClick={() => setShowAdmin(true)}>Admin Panel</button>
+            )}
+            <div className="settings-icon">⚙️</div>
+          </div>
         </div>
 
         {/* Balance */}
