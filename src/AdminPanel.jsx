@@ -8,7 +8,7 @@ const AdminPanel = ({ adminId, onClose }) => {
     const [origins, setOrigins] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
-    const [newChannel, setNewChannel] = useState({ channel_id: '', channel_name: '', channel_url: '' });
+    const [newChannel, setNewChannel] = useState({ channel_name: '', channel_url: '' });
     const [newOrigin, setNewOrigin] = useState('');
     const [resolveUsername, setResolveUsername] = useState('');
 
@@ -74,7 +74,7 @@ const AdminPanel = ({ adminId, onClose }) => {
                 body: JSON.stringify(newChannel)
             });
             if (!res.ok) throw new Error(await res.text());
-            setNewChannel({ channel_id: '', channel_name: '', channel_url: '' });
+            setNewChannel({ channel_name: '', channel_url: '' });
             fetchChannels();
         } catch (error) {
             alert('Failed to add channel: ' + error.message);
@@ -215,36 +215,18 @@ const AdminPanel = ({ adminId, onClose }) => {
 
                     {!loading && activeTab === 'channels' && (
                         <div className="channels-section">
-
-                            {/* Tool to Find Channel ID */}
-                            <div className="resolve-tool" style={{ marginBottom: '20px', padding: '15px', background: '#333', borderRadius: '8px' }}>
-                                <h4>Find Channel ID</h4>
-                                <p style={{ fontSize: '0.9rem', color: '#aaa', marginBottom: '10px' }}>
-                                    Enter Public Channel Username (e.g. @mychannel) to find its ID. <br />
-                                    For Private Channels, you must add the bot as Admin and use a tool like @JsonDumpBot to find the ID (-100...).
-                                </p>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <input
-                                        placeholder="@username"
-                                        value={resolveUsername}
-                                        onChange={e => setResolveUsername(e.target.value)}
-                                        style={{ flex: 1 }}
-                                    />
-                                    <button onClick={handleResolveId} style={{ background: '#666' }}>Find ID</button>
-                                </div>
-                            </div>
-
                             <form onSubmit={handleAddChannel} className="add-channel-form">
                                 <input
-                                    placeholder="Channel ID (Private) OR @username"
-                                    value={newChannel.channel_id}
-                                    onChange={e => setNewChannel({ ...newChannel, channel_id: e.target.value })}
+                                    placeholder="Channel Name"
+                                    value={newChannel.channel_name}
+                                    onChange={e => setNewChannel({ ...newChannel, channel_name: e.target.value })}
+                                    required
                                 />
-                                <div style={{ textAlign: 'center', margin: '5px' }}>OR</div>
                                 <input
-                                    placeholder="Channel Link (Public Only)"
+                                    placeholder="Channel Link (e.g. https://t.me/username)"
                                     value={newChannel.channel_url}
                                     onChange={e => setNewChannel({ ...newChannel, channel_url: e.target.value })}
+                                    required
                                 />
                                 <button type="submit">Add Channel</button>
                             </form>
@@ -252,9 +234,8 @@ const AdminPanel = ({ adminId, onClose }) => {
                                 {channels.map(ch => (
                                     <div key={ch.id} className="channel-card">
                                         <div>
-                                            {/* Display ID as primary info since Name/URL are removed */}
-                                            <h4>{ch.channel_id}</h4>
-                                            {ch.channel_name && <p>{ch.channel_name}</p>}
+                                            <h4>{ch.channel_name}</h4>
+                                            <p style={{ fontSize: '0.8rem', color: '#aaa' }}>{ch.channel_url}</p>
                                         </div>
                                         <button className="delete-btn" onClick={() => handleDeleteChannel(ch.id)}>Remove</button>
                                     </div>
