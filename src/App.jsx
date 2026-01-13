@@ -186,10 +186,15 @@ function App() {
               <button
                 key={ch.id}
                 onClick={() => {
-                  if (window.Telegram && window.Telegram.WebApp) {
-                    window.Telegram.WebApp.openTgLink(ch.channel_url);
+                  const url = ch.channel_url;
+                  if (url) {
+                    if (window.Telegram && window.Telegram.WebApp) {
+                      window.Telegram.WebApp.openTgLink(url);
+                    } else {
+                      window.open(url, '_blank');
+                    }
                   } else {
-                    window.open(ch.channel_url, '_blank');
+                    alert('Invalid Channel Link');
                   }
                 }}
                 className="channel-btn"
